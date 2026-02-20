@@ -24,6 +24,9 @@ const orderIdValue = document.getElementById('orderId');
 // Элементы карточек размеров
 const sizes = document.querySelectorAll('.main-size-card');
 
+// Элементы карточек скоростей
+const speeds = document.querySelectorAll('.main-speed-card');
+
 //2. Переменные для карты и расчетов
 // Переменные для карты, маршрута и расчетов
 let map;
@@ -39,7 +42,15 @@ const MIN_BY_SIZE = {xs: 149, s: 199, m: 249, l: 349, xl: 499, max: 999};
 ymaps.ready(() => {
     // 11. Сброс расчета при изменениях
     // Внутрь ymaps.ready sizes.forEach после sizes.forEach добавляем
-    renderInfo();
+    // Логика выбора размера посылки и скорости доставки
+    [sizes, speeds].forEach(group => {
+        group.forEach(element => {
+            element.addEventListener('click', () => {
+                group.forEach((c) => c.classList.toggle('is-active', c.dataset.value === element.dataset.value));
+                renderInfo();
+            })
+        });
+    });
 
     // Создаем карту с центром в Москве.
     map = new ymaps.Map('map', {
@@ -108,6 +119,13 @@ calcButton.addEventListener('click', () => {
             let total = Math.max(MIN_BY_SIZE[size], Math.ceil(km * RATES[size]));
             let duration = Math.min(30, 1 + Math.ceil(km / 80));
 
+            // Увеличиваем на 15% и сокращаем время на 30%
+            const speed = document.querySelector('.main-speed-card.is-active').dataset.value;
+            if (speed === 'fast') {
+                total = Math.ceil(total * 1.15);
+                duration = Math.ceil(duration - (duration * 0.30));
+            }
+
             calculation = {
                 from: fromInput.value,
                 to: toInput.value,
@@ -115,7 +133,8 @@ calcButton.addEventListener('click', () => {
                 distance: km.toFixed(1),
                 duration: duration,
                 rate: RATES[size],
-                total: total
+                total: total,
+                speed: speed
             };
 
             renderInfo({
@@ -151,9 +170,6 @@ function failedCalculation() {
     alert('Не удалось построить маршрут. Проверьте адреса и выбранные параметры.');
     submitButton.disabled = true;
 }
-// 11. Сброс расчета при изменениях
-// И тоже самое после calcButton.disabled ниже
-renderInfo();
 //12. Отправка заявки
 // Отправка заявки (демо без реального бэкенда).
 submitButton.addEventListener('click', async () => {
