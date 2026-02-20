@@ -35,9 +35,6 @@ const RATES = {xs: 9, s: 13, m: 20, l: 27, xl: 35, max: 70};
 // Минимальные тарифы стоимости в зависимости от размера посылки
 const MIN_BY_SIZE = {xs: 149, s: 199, m: 249, l: 349, xl: 499, max: 999};
 
-//3. Подключение API Яндекс карт
-<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=1&suggest_apikey=1" type="text/javascript"></script>
-
 // 4. Инициализация карты
 // Запускаем стартовый функционал работы карт
 ymaps.ready(() => {
