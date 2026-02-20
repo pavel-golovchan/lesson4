@@ -50,3 +50,39 @@ trackToValue.textContent = `Куда: ${response.route.to}`;
 // Рендерим ленту статусов
 // renderStatuses(response.statuses);
 });
+
+//3. Отображение статусов по отправлению
+// Рендерим список статусов в ленте
+function renderStatuses(statuses) {
+    // Очищаем список
+    trackStatusList.innerHTML = '';
+
+    // Пересобираем список
+    statuses.forEach((status) => {
+        // Создаем элемент статуса
+        const item = document.createElement('div');
+        item.className = `track-status ${status.type}`;
+
+        // Иконка статуса
+        const icon = document.createElement('img');
+        icon.className = 'track-status-icon';
+        icon.src = `./images/icons/${status.type}.svg`;
+
+        // Текстовая часть (состояние и дата)
+        const text = document.createElement('div');
+        text.className = 'track-status-text';
+
+        const state = document.createElement('div');
+        state.className = 'track-status-text-state';
+        state.textContent = status.label;
+
+        const date = document.createElement('div');
+        date.className = 'track-status-text-date';
+        date.textContent = status.date;
+
+        // Собираем карточку статуса
+        text.append(state, date);
+        item.append(icon, text);
+        trackStatusList.appendChild(item);
+    });
+}
