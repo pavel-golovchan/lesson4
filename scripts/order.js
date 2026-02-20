@@ -48,7 +48,7 @@ trackFromValue.textContent = `Откуда: ${response.route.from}`;
 trackToValue.textContent = `Куда: ${response.route.to}`;
 
 // Рендерим ленту статусов
-// renderStatuses(response.statuses);
+ renderStatuses(response.statuses);
 });
 
 //3. Отображение статусов по отправлению
