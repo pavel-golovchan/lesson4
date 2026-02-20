@@ -40,18 +40,6 @@ const MIN_BY_SIZE = {xs: 149, s: 199, m: 249, l: 349, xl: 499, max: 999};
 
 //4. Инициализация карты и подсказок
 ymaps.ready(() => {
-    // 11. Сброс расчета при изменениях
-    // Внутрь ymaps.ready sizes.forEach после sizes.forEach добавляем
-    // Логика выбора размера посылки и скорости доставки
-    [sizes, speeds].forEach(group => {
-        group.forEach(element => {
-            element.addEventListener('click', () => {
-                group.forEach((c) => c.classList.toggle('is-active', c.dataset.value === element.dataset.value));
-                renderInfo();
-            })
-        });
-    });
-
     // Создаем карту с центром в Москве.
     map = new ymaps.Map('map', {
         center: [55.751244, 37.618423],
@@ -67,21 +55,31 @@ ymaps.ready(() => {
         console.error('Не удалось загрузить модуль suggest:', err);
     });
 
-});
+    // 11. Сброс расчета при изменениях
+    // Внутрь ymaps.ready sizes.forEach после sizes.forEach добавляем
+    // Логика выбора размера посылки и скорости доставки
+    [sizes, speeds].forEach(group => {
+        group.forEach(element => {
+            element.addEventListener('click', () => {
+                group.forEach((c) => c.classList.toggle('is-active', c.dataset.value === element.dataset.value));
+                renderInfo();
+            })
+        });
+    });
 
+    // 7. Логика отображения кнопки «Рассчитать»
+    // Дизейблим кнопку Рассчитать если одного или двух значений нет
+    [fromInput, toInput].forEach((input) => {
+        input.addEventListener('change', () => {
+            calcButton.disabled = !(fromInput.value && toInput.value);
 
-// 7. Логика отображения кнопки «Рассчитать»
-// Дизейблим кнопку Рассчитать если одного или двух значений нет
-[fromInput, toInput].forEach((input) => {
-    input.addEventListener('change', () => {
-        calcButton.disabled = !(fromInput.value && toInput.value);
-
-        // 11. Сброс расчета при изменениях
-        // И тоже самое после calcButton.disabled ниже
-        renderInfo();
-
+            // 11. Сброс расчета при изменениях
+            // И тоже самое после calcButton.disabled ниже
+            renderInfo();
+        });
     });
 });
+
 // 8. Базовый функционал кнопки «Рассчитать»
 // Основной расчет: строим маршрут и считаем стоимость.
 calcButton.addEventListener('click', () => {
@@ -136,7 +134,7 @@ calcButton.addEventListener('click', () => {
                 total: total,
                 speed: speed
             };
-
+            // вывод результата на страницу
             renderInfo({
                 distanceText: `${calculation.distance} км`,
                 durationText: `${calculation.duration} дн.`,
@@ -163,7 +161,7 @@ function renderInfo(info = null) {
     totalValue.textContent = info ? info['totalText'] : '—';
 }
 
-// Dывод ошибки и сброс подсчетов в случае возникновения ошибки
+// Вывод ошибки и сброс подсчетов в случае возникновения ошибки
 function failedCalculation() {
     calculation = null;
     renderInfo();
