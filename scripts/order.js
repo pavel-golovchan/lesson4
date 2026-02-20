@@ -35,8 +35,7 @@ const RATES = {xs: 9, s: 13, m: 20, l: 27, xl: 35, max: 70};
 // Минимальные тарифы стоимости в зависимости от размера посылки
 const MIN_BY_SIZE = {xs: 149, s: 199, m: 249, l: 349, xl: 499, max: 999};
 
-// 4. Инициализация карты
-// Запускаем стартовый функционал работы карт
+//4. Инициализация карты и подсказок
 ymaps.ready(() => {
     // Создаем карту с центром в Москве.
     map = new ymaps.Map('map', {
@@ -45,11 +44,14 @@ ymaps.ready(() => {
         controls: ['zoomControl']
     });
 
+    //5. Загружаем модуль suggest для подсказок адресов
+    ymaps.modules.require(['suggest']).then(function () {
+        new ymaps.SuggestView('from');
+        new ymaps.SuggestView('to');
+    }).catch(function (err) {
+        console.error('Не удалось загрузить модуль suggest:', err);
+    });
 });
-//5. Подсказки адресов
-// Подключаем подсказки адресов к полям от яндекса
-new ymaps.SuggestView('from');
-new ymaps.SuggestView('to');
 
 ///6. Логика выбора размера посылки
 sizes.forEach(element => {
