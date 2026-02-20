@@ -37,6 +37,10 @@ const MIN_BY_SIZE = {xs: 149, s: 199, m: 249, l: 349, xl: 499, max: 999};
 
 //4. Инициализация карты и подсказок
 ymaps.ready(() => {
+    // 11. Сброс расчета при изменениях
+    // Внутрь ymaps.ready sizes.forEach после sizes.forEach добавляем
+    renderInfo();
+
     // Создаем карту с центром в Москве.
     map = new ymaps.Map('map', {
         center: [55.751244, 37.618423],
@@ -51,19 +55,20 @@ ymaps.ready(() => {
     }).catch(function (err) {
         console.error('Не удалось загрузить модуль suggest:', err);
     });
+
 });
 
-///6. Логика выбора размера посылки
-sizes.forEach(element => {
-    element.addEventListener('click', () => {
-        sizes.forEach((c) => c.classList.toggle('is-active', c.dataset.value === element.dataset.value));
-    })
-});
+
 // 7. Логика отображения кнопки «Рассчитать»
 // Дизейблим кнопку Рассчитать если одного или двух значений нет
 [fromInput, toInput].forEach((input) => {
     input.addEventListener('change', () => {
         calcButton.disabled = !(fromInput.value && toInput.value);
+
+        // 11. Сброс расчета при изменениях
+        // И тоже самое после calcButton.disabled ниже
+        renderInfo();
+
     });
 });
 // 8. Базовый функционал кнопки «Рассчитать»
@@ -72,62 +77,62 @@ calcButton.addEventListener('click', () => {
     // Удаляем старый маршрут с карты.
     if (mapRoute) {
         map.geoObjects.remove(mapRoute);
-        mapRoute = null;
     }
 
     // Создаем новый маршрут по введенным точкам.
-    mapRoute = new ymaps.multiRouter.MultiRoute({referencePoints: [fromInput.value, toInput.value]}, {boundsAutoApply: false});
+    mapRoute = new ymaps.multiRouter.MultiRoute({
+        referencePoints: [fromInput.value, toInput.value]
+    }, {
+        boundsAutoApply: true
+    });
 
     // Добавляем новый маршрут на карту.
     map.geoObjects.add(mapRoute);
 
-});
+    // 9. Расчеты после построения маршрута
+    // Подписываемся на события маршрута
+    mapRoute.model.events.add('requestsuccess', () => {
+        try {
+            const activeRoute = mapRoute.getActiveRoute();
+            if (!activeRoute) {
+                return failedCalculation();
+            }
 
-// 9. Расчеты после построения маршрута
-// Успешно получили маршрут — берём дистанцию и время.
-mapRoute.model.events.add('requestsuccess', () => {
-    try {
-        // Берем активный маршрут (основной).
-        const activeRoute = mapRoute.getActiveRoute();
-        if (!activeRoute) {
-            return failedCalculation();
+            const km = activeRoute.properties.get('distance').value / 1000;
+            const size = document.querySelector('.main-size-card.is-active')?.dataset.value;
+
+            if (!size) {
+                return failedCalculation();
+            }
+
+            let total = Math.max(MIN_BY_SIZE[size], Math.ceil(km * RATES[size]));
+            let duration = Math.min(30, 1 + Math.ceil(km / 80));
+
+            calculation = {
+                from: fromInput.value,
+                to: toInput.value,
+                size: size,
+                distance: km.toFixed(1),
+                duration: duration,
+                rate: RATES[size],
+                total: total
+            };
+
+            renderInfo({
+                distanceText: `${calculation.distance} км`,
+                durationText: `${calculation.duration} дн.`,
+                rateText: `${calculation.rate} ₽/км`,
+                totalText: calculation.total
+            });
+
+            submitButton.disabled = false;
+        } catch (err) {
+            failedCalculation();
         }
+    });
 
-        // Извлекаем расстояние и длительность.
-        const km = activeRoute.properties.get('distance').value / 1000;
-        // Считаем цену: тариф * км, округляем вверх.
-        const size = document.querySelector('.main-size-card.is-active').dataset.value;
-        // Применяем минимальный порог.
-        let total = Math.max(MIN_BY_SIZE[size], Math.ceil(km * RATES[size]));
-        // Просчитываем длительность доставки
-        let duration = Math.min(30, 1 + Math.ceil(km / 80));
-
-        calculation = {
-            from: fromInput.value,
-            to: toInput.value,
-            size: size,
-            distance: km.toFixed(1),
-            duration: duration,
-            rate: RATES[size],
-            total: total
-        };
-
-        // Выводим результат на экран.
-        renderInfo({
-            distanceText: `${calculation.distance} км`,
-            durationText: `${calculation.duration} дн.`,
-            rateText: `${calculation.rate} ₽/км`,
-            totalText: calculation.total
-        });
-
-        submitButton.disabled = false;
-    } catch (err) {
-        failedCalculation();
-    }
+    mapRoute.model.events.add('requestfail', failedCalculation);
 });
-
-// Ошибка запроса маршрута.
-mapRoute.model.events.add('requestfail', failedCalculation);
 
 //10. Вспомогательные функции
 // Dывод значений просчета в форму
@@ -147,8 +152,6 @@ function failedCalculation() {
     submitButton.disabled = true;
 }
 // 11. Сброс расчета при изменениях
-// Внутрь ymaps.ready sizes.forEach после sizes.forEach добавляем
-renderInfo();
 // И тоже самое после calcButton.disabled ниже
 renderInfo();
 //12. Отправка заявки
