@@ -152,7 +152,7 @@ calcButton.addEventListener('click', () => {
 });
 
 //10. Вспомогательные функции
-// Dывод значений просчета в форму
+// Вывод значений просчета в форму
 function renderInfo(info = null) {
     // Заполняем значения в UI (или сбрасываем на "—").
     distanceValue.textContent = info ? info['distanceText'] : '—';
@@ -205,4 +205,3 @@ submitButton.addEventListener('click', async () => {
     orderForm.style.display = 'none';
     orderSuccess.classList.add('is-visible');
 });
-
